@@ -132,3 +132,6 @@ Same structure as `:foo@MacBookPro`, but with its own buckets.
       - **Bucket 2** (Agent)
       - **Bucket N** (Agent)
 
+## Overview 
+
+<img src="./overview.png" alt="overview" width="900">
