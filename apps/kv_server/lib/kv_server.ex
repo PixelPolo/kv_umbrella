@@ -3,36 +3,31 @@
 # KVServer (Single centralized server)
 # Receives client requests and routes them based on the routing table
 
-# KVServer
-# ├── Router (KV.Router)
-# │   └── Routing Table:
-# │       [{?a..?m, :foo@MacBookPro},
-# │        {?n..?z, :bar@MacBookPro}]
-# ├── Routes to :foo@MacBookPro for keys starting with "a" to "m"
-# └── Routes to :bar@MacBookPro for keys starting with "n" to "z"
+# Node :foo@MacBookPro
+#
+#   Instance : kv_server
+#   ├── Router (KV.Router)
+#     └── Routing Table: [{?a..?m, :foo@MacBookPro}, {?n..?z, :bar@MacBookPro}]
+#         ├── Routes to :foo@MacBookPro for keys starting with "a" to "m"
+#         └── Routes to :bar@MacBookPro for keys starting with "n" to "z"
+#
+#   Instance : kv
+#   └── KV.Supervisor (strategy :one_for_all)
+#       ├── KV.Registry (GenServer) - Manages bucket registration
+#       └── KV.BucketSupervisor (DynamicSupervisor, strategy :one_for_one)
+#           ├── Bucket 1 (Agent)
+#           ├── Bucket 2 (Agent)
+#           └── Bucket N (Agent)
 
-# # Node :foo@MacBookPro (KV application instance)
-# # Supervises its own processes and buckets
-
-# :foo@MacBookPro
-# └── KV.Supervisor (strategy :one_for_all)
-#     ├── KV.Registry (GenServer) - Manages bucket registration
-#     └── KV.BucketSupervisor (DynamicSupervisor, strategy :one_for_one)
-#         ├── Bucket 1 (Agent)
-#         ├── Bucket 2 (Agent)
-#         └── Bucket N (Agent)
-
-# # Node :bar@MacBookPro (KV application instance)
-# # Same structure as :foo@MacBookPro, but with its own buckets
-
-# :bar@MacBookPro
-# └── KV.Supervisor (strategy :one_for_all)
-#     ├── KV.Registry (GenServer)
-#     └── KV.BucketSupervisor (DynamicSupervisor, strategy :one_for_one)
-#         ├── Bucket 1 (Agent)
-#         ├── Bucket 2 (Agent)
-#         └── Bucket N (Agent)
-
+# Node :bar@MacBookPro
+#
+#   Instance : kv
+#   └── KV.Supervisor (strategy :one_for_all)
+#       ├── KV.Registry (GenServer) - Manages bucket registration
+#       └── KV.BucketSupervisor (DynamicSupervisor, strategy :one_for_one)
+#           ├── Bucket 1 (Agent)
+#           ├── Bucket 2 (Agent)
+#           └── Bucket N (Agent)
 
 defmodule KVServer do
   require Logger

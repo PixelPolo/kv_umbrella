@@ -88,49 +88,33 @@ $ telnet 127.0.0.1 4040
 
 ## Distributed System Architecture:
 
-### Node :foo@MacBookPro (Central server and KV application instance)
-Acts as both the main server and a KV application instance, managing routing and bucket processes.
+```sh
+# Node :foo@MacBookPro
+#
+#   Instance : kv_server
+#   ├── Router (KV.Router)
+#     └── Routing Table: [{?a..?m, :foo@MacBookPro}, {?n..?z, :bar@MacBookPro}]
+#         ├── Routes to :foo@MacBookPro for keys starting with "a" to "m"
+#         └── Routes to :bar@MacBookPro for keys starting with "n" to "z"
+#
+#   Instance : kv
+#   └── KV.Supervisor (strategy :one_for_all)
+#       ├── KV.Registry (GenServer) - Manages bucket registration
+#       └── KV.BucketSupervisor (DynamicSupervisor, strategy :one_for_one)
+#           ├── Bucket 1 (Agent)
+#           ├── Bucket 2 (Agent)
+#           └── Bucket N (Agent)
 
-- **:foo@MacBookPro**
-  - **KVServer** (Central server to receive and route client requests)
-  - **Router (KV.Router)**
-    - **Routing Table**:
-      - `{?a..?m, :foo@MacBookPro}`
-      - `{?n..?z, :bar@MacBookPro}`
-    - **Routing Paths**
-      - Routes to `:foo@MacBookPro` for keys starting with "a" to "m"
-      - Routes to `:bar@MacBookPro` for keys starting with "n" to "z`
-  - **KV.Supervisor** (strategy: `:one_for_all`)
-    - **KV.Registry** (GenServer) - Manages bucket registration
-    - **KV.BucketSupervisor** (DynamicSupervisor, strategy: `:one_for_one`)
-      - **Bucket 1** (Agent)
-      - **Bucket 2** (Agent)
-      - **Bucket N** (Agent)
-
----
-
-#### Node :bar@MacBookPro (Secondary KV application instance)
-Manages its own processes and buckets independently based on routing rules.
-- **:bar@MacBookPro**
-  - **KV.Supervisor** (strategy: `:one_for_all`)
-    - **KV.Registry** (GenServer) - Manages bucket registration
-    - **KV.BucketSupervisor** (DynamicSupervisor, strategy: `:one_for_one`)
-      - **Bucket 1** (Agent)
-      - **Bucket 2** (Agent)
-      - **Bucket N** (Agent)
-
----
-
-#### Node :bar@MacBookPro (KV application instance)
-Same structure as `:foo@MacBookPro`, but with its own buckets.
-
-- **:bar@MacBookPro**
-  - **KV.Supervisor** (strategy: `:one_for_all`)
-    - **KV.Registry** (GenServer)
-    - **KV.BucketSupervisor** (DynamicSupervisor, strategy: `:one_for_one`)
-      - **Bucket 1** (Agent)
-      - **Bucket 2** (Agent)
-      - **Bucket N** (Agent)
+# Node :bar@MacBookPro
+#
+#   Instance : kv
+#   └── KV.Supervisor (strategy :one_for_all)
+#       ├── KV.Registry (GenServer) - Manages bucket registration
+#       └── KV.BucketSupervisor (DynamicSupervisor, strategy :one_for_one)
+#           ├── Bucket 1 (Agent)
+#           ├── Bucket 2 (Agent)
+#           └── Bucket N (Agent)
+```
 
 ## Overview 
 
