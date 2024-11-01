@@ -1,7 +1,10 @@
 defmodule KVServer.Command do
   require Config
   require Logger
-  ## Parse
+
+  ###########
+  ## Parse ##
+  ###########
 
   @doc ~S"""
   Parses the given `line` into a command.
@@ -31,7 +34,6 @@ defmodule KVServer.Command do
 
       iex> KVServer.Command.parse "GET shopping\r\n"
       {:error, :unknown_command}
-
   """
   def parse(line) do
     # String.split for whitespace-insensitive
@@ -44,7 +46,9 @@ defmodule KVServer.Command do
     end
   end
 
-  ## Run
+  #########
+  ## Run ##
+  #########
 
   # Function without a body for documentation
 

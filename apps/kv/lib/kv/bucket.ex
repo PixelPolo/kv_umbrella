@@ -1,17 +1,18 @@
 defmodule KV.Bucket do
   @moduledoc """
-  `KV.Bucket` is an `Agent` that acts as a simple key-value store.
-  """
+  `KV.Bucket` is a module to start buckets as `Agents` that acts as a simple key-value store.
 
-  #  If they crash, regardless of the reason, they should not be restarted with :temporary
-  use Agent, restart: :temporary
-
-  @doc """
-  Starts a new bucket process using an Agent.
   An Agent is a simple abstraction that allows
   to manage state in a separate process.
   This bucket will use a map (`%{}`) to store its state.
   https://hexdocs.pm/elixir/Agent.html
+  """
+
+  #  If the Agent crash, it should not be restarted (temporary)
+  use Agent, restart: :temporary
+
+  @doc """
+  Starts a new bucket (a process as an Agent with an empty map as a state)
   """
   def start_link(_opts) do
     Agent.start_link(fn -> %{} end)
@@ -35,6 +36,7 @@ defmodule KV.Bucket do
 
   @doc """
   Deletes `key`from `bucket`.
+
   Returns the current value of `key`, if `key` exists.
   """
   def delete(bucket, key) do

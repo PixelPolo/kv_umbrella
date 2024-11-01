@@ -1,31 +1,23 @@
 defmodule KV.Supervisor do
   @moduledoc """
   A Supervisor is a process that supervises other processes and restarts them whenever they crash.
-  `KV.Supervisor` is a `Supervisor` that ensures `KV.Registry` is always running and restarts it if it crashes.
+
+  `KV.Supervisor` is a module to start a `Supervisor` that ensures `KV.Registry` is always running
   """
+
+  # EXAMPLES :
+  # {:ok, sup} = KV.Supervisor.start_link([]) to tell the supervisor to create children
+  # [{_, registry, _, _}] = Supervisor.which_children(sup) to fetch the PID name of the child
+
+  # STRATEGIES :
+  # :one_for_all strategy: if one child process crashes, the supervisor will terminate and restart all child processes.
+  # :one_for_one strategy: if a child process crashes, only that specific child will be restarted.
 
   use Supervisor
 
   def start_link(opts) do
     Supervisor.start_link(__MODULE__, :ok, opts)
   end
-
-  # The supervision strategy defines what happens when one of the children crashes.
-  # :one_for_one means that if a child dies, it will be the only one restarted.
-
-  # {:ok, sup} = KV.Supervisor.start_link([]) to tell the supervisor to create children
-  # [{_, registry, _, _}] = Supervisor.which_children(sup) to fetch the PID name of the child
-
-  # The name `KV.Registry` is an option given to KV.Registry.start_link/1 in registry.ex
-  # KV.Supervisor.start_link([])
-  # KV.Registry.create(KV.Registry, "shopping") not using a PID fetched from supervisor
-
-  # The DynamicSupervisor does not expect a list of children during initialization,
-  # instead each child is started manually via DynamicSupervisor.start_child/2
-  # {:ok, bucket} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
-
-  # :one_for_all strategy: the supervisor will kill and restart
-  # all of its children processes whenever any one of them dies
 
   #   KV.Supervisor (strategy :one_for_all)
   # │
@@ -47,6 +39,7 @@ defmodule KV.Supervisor do
       {Task.Supervisor, name: KV.RouterTasks}
     ]
 
+    # Init callback to start_link all children
     Supervisor.init(children, strategy: :one_for_all)
   end
 end

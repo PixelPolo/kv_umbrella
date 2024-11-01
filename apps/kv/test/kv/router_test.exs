@@ -1,13 +1,11 @@
 ### TO RUN THIS TEST ###
 # Start a distributed session !!!
-
 # 1. Start the app in a terminal from apps/kv
 #   iex --sname bar -S mix
 # 2. Start the app in another terminal from apps/kv
 #   iex --sname foo -S mix
 # 3. Start the test from the root of the umbrella app
 #   elixir --sname test_node -S mix test --only distributed
-
 # Don't forget to modify :foo@computer-name... below
 
 defmodule KV.RouterTest do
@@ -22,7 +20,7 @@ defmodule KV.RouterTest do
       {?n..?z, :bar@MacBookPro}
     ])
 
-    on_exit fn -> Application.put_env(:kv, :routing_table, current) end
+    on_exit(fn -> Application.put_env(:kv, :routing_table, current) end)
   end
 
   @tag :distributed

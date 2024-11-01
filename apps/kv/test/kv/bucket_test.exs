@@ -1,9 +1,9 @@
 defmodule Kv.BucketTest do
-  # Async makes the test faster, but don't use it if
+  # `async` makes the test faster, but don't use it if
   # you're using global values or file system
   use ExUnit.Case, async: true
 
-  # setup is a function callback called before each test
+  # `setup` is a function callback called before each test
   # start_supervised! -> ExUnit kill the process before each test
   # ExUnit will merge the map %{bucket: bucket} with the test map
   setup do
@@ -12,7 +12,7 @@ defmodule Kv.BucketTest do
     %{bucket: bucket}
   end
 
-  # The test macro's context is a map itself,
+  # The test macro's `context` is a map itself,
   # we can pattern match to retreive the bucket
   test "stores values by key", context do
     %{bucket: bucket} = context

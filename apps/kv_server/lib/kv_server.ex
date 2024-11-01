@@ -90,7 +90,9 @@ defmodule KVServer do
     exit(error)
   end
 
-  ## Simple ECHO Server
+  ########################
+  ## Simple ECHO Server ##
+  ########################
 
   # defp serve(socket) do
   #   socket

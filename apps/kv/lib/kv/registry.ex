@@ -1,8 +1,10 @@
 defmodule KV.Registry do
   @moduledoc """
-  `KV.Registry` is a `GenServer` that manages and monitors `Agent` processes as buckets.
+  `KV.Registry` is a module to start a `GenServer` that
+  manages and monitors `Agent` processes as buckets.
 
   It creates new buckets on demand, keeps track of them, and monitors their status.
+
   To improve the registry and allow for concurrent reads, we can use an ETS table.
   An ETS table will leverage a caching mechanism to directly read data in the `lookup` method.
   With this approach, the `GenServer` will not call its callback to perform a read from its map (state).
@@ -11,12 +13,16 @@ defmodule KV.Registry do
 
   use GenServer
 
-  ## Client API
+  ################
+  ## Client API ##
+  ################
 
   @doc """
-  Starts the registry.
+  Starts the registry process.
   """
   def start_link(opts) do
+    # Options are passed from the supervisor.ex as {KV.Registry, name: KV.Registry}
+    # By convention, the module name is the same as the name of the registry
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
@@ -36,9 +42,13 @@ defmodule KV.Registry do
     GenServer.cast(server, {:create, name})
   end
 
-  ## Server Callbacks
+  ######################
+  ## Server Callbacks ##
+  ######################
 
-  # Create a new GenServer with a state as a new map
+  # Initialize a GenServer with a state of two maps:
+  # - `names` tracks bucket Agent names.
+  # - `refs` tracks Agent references as PIDs.
   @impl true
   def init(:ok) do
     names = %{}
@@ -46,34 +56,41 @@ defmodule KV.Registry do
     {:ok, {names, refs}}
   end
 
-  # Calls are synchronous and the server must respond
-  # Return `{:reply, reply, new_state to continue the loop}`
+  # CALL is synchronous, requiring a server response.
+  # The client blocks until it receives the response.
+  # Return {:reply, reply, new_state} to continue processing.
+  # The reply is the result of the fetch method, i.e. if the bucket Agent exists
   @impl true
   def handle_call({:lookup, name}, _from, state) do
     {names, _} = state
     {:reply, Map.fetch(names, name), state}
   end
 
-  # Cast are asynchronous
-  # Check if a process with a bucket already exists; if not, create one
-  # start_link creates a bidirectional link (if one crashes, the other does too)
-  # monitor is unidirectional (if the bucket crashes, the GenServer is notified but not affected)
+  # handle_cast is asynchronous, instantly returns `:ok`, and executes in the background.
+  # - `:noreply` allows the server to continue without sending a response.
+  # This function checks if a bucket Agent already exists; if not, it creates one.
+  # A bucket Agent could be created directly with {:ok, bucket} = KV.Bucket.start_link([]),
+  # establishing a bidirectional link (if one process crashes, the other follows).
+  # Instead, we use a DynamicSupervisor and monitor the process to get its reference.
+  # - `monitor` is unidirectional: if the bucket crashes, the GenServer is notified without crashing.
+  # Process.monitor(pid) returns a unique reference that allows us to match upcoming messages (like :DOWN) to that monitoring reference.
   @impl true
   def handle_cast({:create, name}, {names, refs}) do
     if Map.has_key?(names, name) do
       {:noreply, {names, refs}}
     else
-      # Starts a KV.Bucket process directly, bypassing the supervisor.
-      # {:ok, bucket} = KV.Bucket.start_link([])
-      # Dynamically adds a child specification to supervisor and starts that child.
       {:ok, bucket} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
       ref = Process.monitor(bucket)
       refs = Map.put(refs, ref, name)
       names = Map.put(names, name, bucket)
+      IO.inspect(refs)
+      IO.inspect(names)
       {:noreply, {names, refs}}
     end
   end
 
+  # Monitoring allows us to handle bucket failures dynamically, removing the bucket's references from the `names` and `refs` states,
+  # thereby preserving system stability without interrupting the GenServer.
   @impl true
   def handle_info({:DOWN, ref, :process, _pid, _reason}, {names, refs}) do
     {name, refs} = Map.pop(refs, ref)
